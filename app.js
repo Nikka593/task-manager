@@ -11,7 +11,7 @@ class TaskManager {
         this.calendarDate = new Date(2025, 5, 11);
         this.showSubtasks = true;
         this.editingTaskId = null;
-        this.taskToDelete = null;
+        this.userToDelete = null;
         
         this.init();
     }
@@ -139,22 +139,18 @@ class TaskManager {
             });
         });
 
-        // Task buttons
+        // New task button
         document.getElementById('new-task-btn').addEventListener('click', () => {
             this.openTaskModal();
-        });
-
-        document.getElementById('bulk-parent-btn').addEventListener('click', () => {
-            this.openBulkParentModal();
-        });
-
-        document.getElementById('bulk-child-btn').addEventListener('click', () => {
-            this.openBulkChildModal();
         });
 
         // Search
         document.getElementById('search-input').addEventListener('input', (e) => {
             this.filterTasks();
+        });
+
+        document.getElementById('user-search-input').addEventListener('input', (e) => {
+            this.filterUsers();
         });
 
         // Filters
@@ -181,7 +177,7 @@ class TaskManager {
             this.updateTimelineView();
         });
 
-        // Regular task modal controls
+        // Task modal controls
         document.getElementById('modal-close').addEventListener('click', () => this.closeTaskModal());
         document.getElementById('modal-cancel').addEventListener('click', () => this.closeTaskModal());
         document.getElementById('modal-save').addEventListener('click', () => this.saveTask());
@@ -189,33 +185,30 @@ class TaskManager {
             if (e.target.id === 'task-modal') this.closeTaskModal();
         });
 
-        // Bulk parent modal controls
-        document.getElementById('bulk-parent-close').addEventListener('click', () => this.closeBulkParentModal());
-        document.getElementById('bulk-parent-cancel').addEventListener('click', () => this.closeBulkParentModal());
-        document.getElementById('bulk-parent-save').addEventListener('click', () => this.saveBulkParentTasks());
-        document.getElementById('bulk-parent-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'bulk-parent-modal') this.closeBulkParentModal();
+        // User management controls
+        document.getElementById('add-user-btn').addEventListener('click', () => this.openAddUserModal());
+        document.getElementById('add-user-modal-close').addEventListener('click', () => this.closeAddUserModal());
+        document.getElementById('add-user-cancel').addEventListener('click', () => this.closeAddUserModal());
+        document.getElementById('add-user-save').addEventListener('click', () => this.saveUser());
+        document.getElementById('add-user-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'add-user-modal') this.closeAddUserModal();
         });
 
-        // Bulk child modal controls
-        document.getElementById('bulk-child-close').addEventListener('click', () => this.closeBulkChildModal());
-        document.getElementById('bulk-child-cancel').addEventListener('click', () => this.closeBulkChildModal());
-        document.getElementById('bulk-child-save').addEventListener('click', () => this.saveBulkChildTasks());
-        document.getElementById('bulk-child-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'bulk-child-modal') this.closeBulkChildModal();
+        // User deletion controls
+        document.getElementById('delete-user-modal-close').addEventListener('click', () => this.closeDeleteUserModal());
+        document.getElementById('delete-user-cancel').addEventListener('click', () => this.closeDeleteUserModal());
+        document.getElementById('delete-user-confirm').addEventListener('click', () => this.confirmDeleteUser());
+        document.getElementById('delete-user-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'delete-user-modal') this.closeDeleteUserModal();
         });
 
-        // Delete confirmation modal controls
-        document.getElementById('delete-modal-close').addEventListener('click', () => this.closeDeleteModal());
-        document.getElementById('delete-cancel').addEventListener('click', () => this.closeDeleteModal());
-        document.getElementById('delete-confirm').addEventListener('click', () => this.confirmDelete());
-        document.getElementById('delete-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'delete-modal') this.closeDeleteModal();
-        });
+        // User name validation
+        document.getElementById('new-user-name').addEventListener('input', () => this.validateUserName());
 
-        // Bulk registration preview updates
-        document.getElementById('bulk-parent-names').addEventListener('input', () => this.updateBulkParentPreview());
-        document.getElementById('bulk-child-names').addEventListener('input', () => this.updateBulkChildPreview());
+        // Task action radio buttons
+        document.querySelectorAll('input[name="task-action"]').forEach(radio => {
+            radio.addEventListener('change', () => this.toggleReassignOptions());
+        });
     }
 
     populateDropdowns() {
@@ -223,15 +216,17 @@ class TaskManager {
         const assigneeSelects = [
             document.getElementById('assignee-filter'),
             document.getElementById('task-assignee'),
-            document.getElementById('task-assigner'),
-            document.getElementById('bulk-parent-assignee'),
-            document.getElementById('bulk-parent-assigner'),
-            document.getElementById('bulk-child-assignee'),
-            document.getElementById('bulk-child-assigner')
+            document.getElementById('task-assigner')
         ];
 
         assigneeSelects.forEach(select => {
             if (select) {
+                // Clear existing options (except first one for filters)
+                const isFilter = select.id.includes('filter');
+                while (select.children.length > (isFilter ? 1 : 0)) {
+                    select.removeChild(select.lastChild);
+                }
+
                 this.users.forEach(user => {
                     const option = document.createElement('option');
                     option.value = user;
@@ -246,26 +241,20 @@ class TaskManager {
     }
 
     updateParentTaskDropdown() {
-        const parentSelects = [
-            document.getElementById('task-parent'),
-            document.getElementById('bulk-child-parent')
-        ];
+        const parentSelect = document.getElementById('task-parent');
+        if (!parentSelect) return;
 
-        parentSelects.forEach(parentSelect => {
-            if (!parentSelect) return;
+        // Clear existing options except the first one
+        while (parentSelect.children.length > 1) {
+            parentSelect.removeChild(parentSelect.lastChild);
+        }
 
-            // Clear existing options except the first one
-            while (parentSelect.children.length > 1) {
-                parentSelect.removeChild(parentSelect.lastChild);
-            }
-
-            // Add parent tasks (tasks without parentId)
-            this.tasks.filter(task => !task.parentId).forEach(task => {
-                const option = document.createElement('option');
-                option.value = task.id;
-                option.textContent = task.name;
-                parentSelect.appendChild(option);
-            });
+        // Add parent tasks (tasks without parentId)
+        this.tasks.filter(task => !task.parentId).forEach(task => {
+            const option = document.createElement('option');
+            option.value = task.id;
+            option.textContent = task.name;
+            parentSelect.appendChild(option);
         });
     }
 
@@ -283,7 +272,8 @@ class TaskManager {
             list: 'リスト表示',
             calendar: 'カレンダー表示',
             timeline: 'タイムライン表示',
-            stats: '統計ダッシュボード'
+            stats: '統計ダッシュボード',
+            users: 'ユーザー管理'
         };
         document.getElementById('view-title').textContent = titles[view];
 
@@ -310,9 +300,265 @@ class TaskManager {
             case 'stats':
                 this.updateStats();
                 break;
+            case 'users':
+                this.updateUsersView();
+                break;
         }
     }
 
+    // User Management Functions
+    updateUsersView() {
+        const tableBody = document.getElementById('users-table-body');
+        const searchTerm = document.getElementById('user-search-input').value.toLowerCase();
+        
+        const filteredUsers = searchTerm 
+            ? this.users.filter(user => user.toLowerCase().includes(searchTerm))
+            : this.users;
+
+        tableBody.innerHTML = '';
+
+        filteredUsers.forEach(user => {
+            const userStats = this.getUserStats(user);
+            const row = document.createElement('tr');
+            
+            row.innerHTML = `
+                <td>
+                    <strong>${user}</strong>
+                </td>
+                <td>${userStats.assignedTasks}</td>
+                <td>${userStats.instructedTasks}</td>
+                <td>
+                    <div class="completion-rate">
+                        <div class="completion-bar">
+                            <div class="completion-fill" style="width: ${userStats.completionRate}%"></div>
+                        </div>
+                        <span class="completion-text">${userStats.completionRate}%</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="user-actions">
+                        <button class="delete-btn" onclick="taskManager.deleteUser('${user}')" title="削除">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+
+            tableBody.appendChild(row);
+        });
+
+        if (filteredUsers.length === 0) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td colspan="5" style="text-align: center; padding: var(--space-24); color: var(--color-text-secondary);">
+                    ${searchTerm ? 'ユーザーが見つかりません' : 'ユーザーがありません'}
+                </td>
+            `;
+            tableBody.appendChild(row);
+        }
+    }
+
+    getUserStats(userName) {
+        const assignedTasks = this.tasks.filter(task => task.assignee === userName);
+        const instructedTasks = this.tasks.filter(task => task.assigner === userName);
+        
+        const completedAssigned = assignedTasks.filter(task => task.status === '完了').length;
+        const completionRate = assignedTasks.length > 0 
+            ? Math.round((completedAssigned / assignedTasks.length) * 100) 
+            : 0;
+
+        return {
+            assignedTasks: assignedTasks.length,
+            instructedTasks: instructedTasks.length,
+            completionRate: completionRate
+        };
+    }
+
+    filterUsers() {
+        this.updateUsersView();
+    }
+
+    // Add User Modal Functions
+    openAddUserModal() {
+        document.getElementById('new-user-name').value = '';
+        document.getElementById('user-name-feedback').textContent = '';
+        document.getElementById('user-name-feedback').className = 'form-feedback';
+        document.getElementById('add-user-modal').classList.add('active');
+        document.getElementById('new-user-name').focus();
+    }
+
+    closeAddUserModal() {
+        document.getElementById('add-user-modal').classList.remove('active');
+    }
+
+    validateUserName() {
+        const nameInput = document.getElementById('new-user-name');
+        const feedback = document.getElementById('user-name-feedback');
+        const userName = nameInput.value.trim();
+
+        if (!userName) {
+            feedback.textContent = '';
+            feedback.className = 'form-feedback';
+            return false;
+        }
+
+        if (this.users.includes(userName)) {
+            feedback.textContent = 'このユーザー名は既に存在します';
+            feedback.className = 'form-feedback error';
+            return false;
+        }
+
+        if (userName.length < 2) {
+            feedback.textContent = 'ユーザー名は2文字以上で入力してください';
+            feedback.className = 'form-feedback error';
+            return false;
+        }
+
+        if (userName.length > 20) {
+            feedback.textContent = 'ユーザー名は20文字以下で入力してください';
+            feedback.className = 'form-feedback error';
+            return false;
+        }
+
+        feedback.textContent = '利用可能なユーザー名です';
+        feedback.className = 'form-feedback success';
+        return true;
+    }
+
+    saveUser() {
+        const userName = document.getElementById('new-user-name').value.trim();
+        
+        if (!this.validateUserName()) {
+            this.showToast('入力内容を確認してください', 'error');
+            return;
+        }
+
+        this.users.push(userName);
+        this.populateDropdowns();
+        this.updateUsersView();
+        this.closeAddUserModal();
+        this.showToast(`ユーザー「${userName}」を追加しました`, 'success');
+    }
+
+    // Delete User Functions
+    deleteUser(userName) {
+        this.userToDelete = userName;
+        
+        // Get related tasks
+        const relatedTasks = this.tasks.filter(task => 
+            task.assignee === userName || task.assigner === userName
+        );
+
+        document.getElementById('delete-user-message').textContent = 
+            `ユーザー「${userName}」を削除しますか？`;
+
+        const warningDiv = document.getElementById('delete-user-task-warning');
+        const tasksList = document.getElementById('related-tasks-list');
+        
+        if (relatedTasks.length > 0) {
+            warningDiv.classList.remove('hidden');
+            tasksList.innerHTML = '';
+            
+            relatedTasks.forEach(task => {
+                const li = document.createElement('li');
+                const roles = [];
+                if (task.assignee === userName) roles.push('担当者');
+                if (task.assigner === userName) roles.push('指示者');
+                li.textContent = `${task.name} (${roles.join('・')})`;
+                tasksList.appendChild(li);
+            });
+
+            // Populate reassign dropdown
+            const reassignSelect = document.getElementById('reassign-user');
+            reassignSelect.innerHTML = '<option value="">選択してください</option>';
+            this.users.filter(user => user !== userName).forEach(user => {
+                const option = document.createElement('option');
+                option.value = user;
+                option.textContent = user;
+                reassignSelect.appendChild(option);
+            });
+
+            // Reset radio buttons
+            document.getElementById('reassign-tasks').checked = true;
+            this.toggleReassignOptions();
+        } else {
+            warningDiv.classList.add('hidden');
+        }
+
+        document.getElementById('delete-user-modal').classList.add('active');
+    }
+
+    toggleReassignOptions() {
+        const reassignSelected = document.getElementById('reassign-tasks').checked;
+        const reassignOptions = document.getElementById('reassign-options');
+        
+        if (reassignSelected) {
+            reassignOptions.style.display = 'block';
+        } else {
+            reassignOptions.style.display = 'none';
+        }
+    }
+
+    closeDeleteUserModal() {
+        document.getElementById('delete-user-modal').classList.remove('active');
+        this.userToDelete = null;
+    }
+
+    confirmDeleteUser() {
+        if (!this.userToDelete) return;
+
+        const relatedTasks = this.tasks.filter(task => 
+            task.assignee === this.userToDelete || task.assigner === this.userToDelete
+        );
+
+        if (relatedTasks.length > 0) {
+            const action = document.querySelector('input[name="task-action"]:checked').value;
+            
+            if (action === 'reassign') {
+                const reassignUser = document.getElementById('reassign-user').value;
+                if (!reassignUser) {
+                    this.showToast('再割り当て先ユーザーを選択してください', 'error');
+                    return;
+                }
+
+                // Reassign tasks
+                relatedTasks.forEach(task => {
+                    if (task.assignee === this.userToDelete) {
+                        task.assignee = reassignUser;
+                    }
+                    if (task.assigner === this.userToDelete) {
+                        task.assigner = reassignUser;
+                    }
+                });
+
+                this.showToast(`${relatedTasks.length}個のタスクを「${reassignUser}」に再割り当てしました`, 'info');
+            } else {
+                // Unassign tasks
+                relatedTasks.forEach(task => {
+                    if (task.assignee === this.userToDelete) {
+                        task.assignee = '';
+                    }
+                    if (task.assigner === this.userToDelete) {
+                        task.assigner = '';
+                    }
+                });
+
+                this.showToast(`${relatedTasks.length}個のタスクの担当者/指示者を未設定にしました`, 'info');
+            }
+        }
+
+        // Remove user
+        this.users = this.users.filter(user => user !== this.userToDelete);
+        
+        this.populateDropdowns();
+        this.updateUsersView();
+        this.updateView(); // Update current view to reflect changes
+        this.closeDeleteUserModal();
+        
+        this.showToast(`ユーザー「${this.userToDelete}」を削除しました`, 'success');
+    }
+
+    // Existing task management functions (keeping all previous functionality)
     updateListView() {
         const container = document.getElementById('task-list');
         const filteredTasks = this.getFilteredTasks();
@@ -403,282 +649,6 @@ class TaskManager {
         return element;
     }
 
-    // Bulk Parent Tasks Modal Functions
-    openBulkParentModal() {
-        document.getElementById('bulk-parent-modal').classList.add('active');
-        this.resetBulkParentForm();
-        this.updateBulkParentPreview();
-    }
-
-    closeBulkParentModal() {
-        document.getElementById('bulk-parent-modal').classList.remove('active');
-    }
-
-    resetBulkParentForm() {
-        document.getElementById('bulk-parent-names').value = '';
-        document.getElementById('bulk-parent-assignee').value = '';
-        document.getElementById('bulk-parent-assigner').value = '';
-        document.getElementById('bulk-parent-status').value = '未開始';
-        document.getElementById('bulk-parent-priority').value = '中';
-        document.getElementById('bulk-parent-start-date').value = '';
-        document.getElementById('bulk-parent-deadline').value = '';
-        document.getElementById('bulk-parent-memo').value = '';
-    }
-
-    updateBulkParentPreview() {
-        const namesText = document.getElementById('bulk-parent-names').value;
-        const names = namesText.split('\n').map(name => name.trim()).filter(name => name.length > 0);
-        const previewContainer = document.getElementById('bulk-parent-preview');
-        
-        if (names.length === 0) {
-            previewContainer.innerHTML = '<h5>プレビュー</h5><p class="bulk-preview-empty">タスク名を入力してください</p>';
-            return;
-        }
-
-        if (names.length > 10) {
-            previewContainer.innerHTML = '<h5>プレビュー</h5><p class="bulk-preview-empty">最大10個のタスクまで作成できます</p>';
-            return;
-        }
-
-        const listHtml = names.map(name => `<li class="bulk-preview-item">${name}</li>`).join('');
-        previewContainer.innerHTML = `
-            <h5>プレビュー（${names.length}個のタスク）</h5>
-            <ul class="bulk-preview-list">${listHtml}</ul>
-        `;
-    }
-
-    saveBulkParentTasks() {
-        const namesText = document.getElementById('bulk-parent-names').value;
-        const names = namesText.split('\n').map(name => name.trim()).filter(name => name.length > 0);
-        
-        if (names.length === 0) {
-            this.showToast('タスク名を入力してください', 'error');
-            return;
-        }
-
-        if (names.length > 10) {
-            this.showToast('最大10個のタスクまで作成できます', 'error');
-            return;
-        }
-
-        const commonData = {
-            assignee: document.getElementById('bulk-parent-assignee').value,
-            assigner: document.getElementById('bulk-parent-assigner').value,
-            status: document.getElementById('bulk-parent-status').value,
-            priority: document.getElementById('bulk-parent-priority').value,
-            startDate: document.getElementById('bulk-parent-start-date').value,
-            deadline: document.getElementById('bulk-parent-deadline').value,
-            memo: document.getElementById('bulk-parent-memo').value
-        };
-
-        const createdTasks = [];
-        let nextId = Math.max(...this.tasks.map(t => t.id), 0) + 1;
-
-        names.forEach(name => {
-            const newTask = {
-                id: nextId++,
-                name: name,
-                estimatedHours: 0,
-                parentId: null,
-                childTasks: [],
-                ...commonData
-            };
-            
-            this.tasks.push(newTask);
-            createdTasks.push(newTask);
-        });
-
-        this.closeBulkParentModal();
-        this.updateParentTaskDropdown();
-        this.updateView();
-        this.updateStats();
-        this.showToast(`${createdTasks.length}個の親タスクを作成しました`, 'success');
-    }
-
-    // Bulk Child Tasks Modal Functions
-    openBulkChildModal() {
-        document.getElementById('bulk-child-modal').classList.add('active');
-        this.updateParentTaskDropdown();
-        this.resetBulkChildForm();
-        this.updateBulkChildPreview();
-    }
-
-    closeBulkChildModal() {
-        document.getElementById('bulk-child-modal').classList.remove('active');
-    }
-
-    resetBulkChildForm() {
-        document.getElementById('bulk-child-parent').value = '';
-        document.getElementById('bulk-child-names').value = '';
-        document.getElementById('bulk-child-assignee').value = '';
-        document.getElementById('bulk-child-assigner').value = '';
-        document.getElementById('bulk-child-status').value = '未開始';
-        document.getElementById('bulk-child-priority').value = '中';
-        document.getElementById('bulk-child-start-date').value = '';
-        document.getElementById('bulk-child-deadline').value = '';
-        document.getElementById('bulk-child-memo').value = '';
-    }
-
-    updateBulkChildPreview() {
-        const namesText = document.getElementById('bulk-child-names').value;
-        const names = namesText.split('\n').map(name => name.trim()).filter(name => name.length > 0);
-        const previewContainer = document.getElementById('bulk-child-preview');
-        
-        if (names.length === 0) {
-            previewContainer.innerHTML = '<h5>プレビュー</h5><p class="bulk-preview-empty">タスク名を入力してください</p>';
-            return;
-        }
-
-        if (names.length > 20) {
-            previewContainer.innerHTML = '<h5>プレビュー</h5><p class="bulk-preview-empty">最大20個のタスクまで作成できます</p>';
-            return;
-        }
-
-        const listHtml = names.map(name => `<li class="bulk-preview-item">${name}</li>`).join('');
-        previewContainer.innerHTML = `
-            <h5>プレビュー（${names.length}個のタスク）</h5>
-            <ul class="bulk-preview-list">${listHtml}</ul>
-        `;
-    }
-
-    saveBulkChildTasks() {
-        const parentId = parseInt(document.getElementById('bulk-child-parent').value);
-        const namesText = document.getElementById('bulk-child-names').value;
-        const names = namesText.split('\n').map(name => name.trim()).filter(name => name.length > 0);
-        
-        if (!parentId) {
-            this.showToast('親タスクを選択してください', 'error');
-            return;
-        }
-
-        if (names.length === 0) {
-            this.showToast('タスク名を入力してください', 'error');
-            return;
-        }
-
-        if (names.length > 20) {
-            this.showToast('最大20個のタスクまで作成できます', 'error');
-            return;
-        }
-
-        const parentTask = this.tasks.find(t => t.id === parentId);
-        if (!parentTask) {
-            this.showToast('選択された親タスクが見つかりません', 'error');
-            return;
-        }
-
-        const commonData = {
-            assignee: document.getElementById('bulk-child-assignee').value,
-            assigner: document.getElementById('bulk-child-assigner').value,
-            status: document.getElementById('bulk-child-status').value,
-            priority: document.getElementById('bulk-child-priority').value,
-            startDate: document.getElementById('bulk-child-start-date').value,
-            deadline: document.getElementById('bulk-child-deadline').value,
-            memo: document.getElementById('bulk-child-memo').value
-        };
-
-        const createdTasks = [];
-        let nextId = Math.max(...this.tasks.map(t => t.id), 0) + 1;
-
-        names.forEach(name => {
-            const newTask = {
-                id: nextId++,
-                name: name,
-                estimatedHours: 0,
-                parentId: parentId,
-                childTasks: [],
-                ...commonData
-            };
-            
-            this.tasks.push(newTask);
-            parentTask.childTasks.push(newTask.id);
-            createdTasks.push(newTask);
-        });
-
-        this.closeBulkChildModal();
-        this.updateView();
-        this.updateStats();
-        this.showToast(`${createdTasks.length}個の子タスクを「${parentTask.name}」に作成しました`, 'success');
-    }
-
-    // Enhanced Delete Functions
-    deleteTask(taskId) {
-        const task = this.tasks.find(t => t.id === taskId);
-        if (!task) return;
-
-        this.taskToDelete = taskId;
-        const hasChildren = task.childTasks && task.childTasks.length > 0;
-        
-        document.getElementById('delete-message').textContent = 
-            `「${task.name}」を削除しますか？${hasChildren ? '（子タスクが存在します）' : ''}`;
-        
-        const childOptions = document.getElementById('delete-child-options');
-        if (hasChildren) {
-            childOptions.classList.remove('hidden');
-            document.getElementById('delete-with-children').checked = false;
-        } else {
-            childOptions.classList.add('hidden');
-        }
-
-        document.getElementById('delete-modal').classList.add('active');
-    }
-
-    closeDeleteModal() {
-        document.getElementById('delete-modal').classList.remove('active');
-        this.taskToDelete = null;
-    }
-
-    confirmDelete() {
-        if (!this.taskToDelete) return;
-
-        const task = this.tasks.find(t => t.id === this.taskToDelete);
-        if (!task) return;
-
-        const deleteWithChildren = document.getElementById('delete-with-children').checked;
-        let deletedCount = 1;
-
-        // Handle child tasks
-        if (task.childTasks && task.childTasks.length > 0) {
-            if (deleteWithChildren) {
-                // Delete child tasks
-                task.childTasks.forEach(childId => {
-                    this.tasks = this.tasks.filter(t => t.id !== childId);
-                    deletedCount++;
-                });
-            } else {
-                // Orphan child tasks (remove parentId)
-                task.childTasks.forEach(childId => {
-                    const childTask = this.tasks.find(t => t.id === childId);
-                    if (childTask) {
-                        childTask.parentId = null;
-                    }
-                });
-            }
-        }
-
-        // Remove task from parent's childTasks array if it has a parent
-        if (task.parentId) {
-            const parentTask = this.tasks.find(t => t.id === task.parentId);
-            if (parentTask && parentTask.childTasks) {
-                parentTask.childTasks = parentTask.childTasks.filter(childId => childId !== this.taskToDelete);
-            }
-        }
-
-        // Remove the task itself
-        this.tasks = this.tasks.filter(t => t.id !== this.taskToDelete);
-
-        this.closeDeleteModal();
-        this.updateParentTaskDropdown();
-        this.updateView();
-        this.updateStats();
-        
-        const message = deletedCount > 1 ? 
-            `${deletedCount}個のタスクが削除されました` : 
-            'タスクが削除されました';
-        this.showToast(message, 'success');
-    }
-
-    // Calendar and Timeline functionality (keeping existing methods)
     updateCalendarView() {
         this.updateCalendarTitle();
         const container = document.getElementById('calendar-container');
@@ -1110,6 +1080,25 @@ class TaskManager {
         document.getElementById('task-modal').classList.add('active');
     }
 
+    deleteTask(taskId) {
+        if (!confirm('このタスクを削除しますか？')) return;
+        
+        // Remove task and update child tasks
+        this.tasks = this.tasks.filter(task => task.id !== taskId);
+        this.tasks.forEach(task => {
+            if (task.parentId === taskId) {
+                task.parentId = null;
+            }
+            if (task.childTasks) {
+                task.childTasks = task.childTasks.filter(childId => childId !== taskId);
+            }
+        });
+        
+        this.updateView();
+        this.updateStats();
+        this.showToast('タスクが削除されました', 'success');
+    }
+
     saveTask() {
         const taskData = {
             name: document.getElementById('task-name').value,
@@ -1133,26 +1122,6 @@ class TaskManager {
             // Update existing task
             const taskIndex = this.tasks.findIndex(t => t.id === this.editingTaskId);
             if (taskIndex !== -1) {
-                // Handle parent change
-                const oldTask = this.tasks[taskIndex];
-                if (oldTask.parentId !== taskData.parentId) {
-                    // Remove from old parent
-                    if (oldTask.parentId) {
-                        const oldParent = this.tasks.find(t => t.id === oldTask.parentId);
-                        if (oldParent && oldParent.childTasks) {
-                            oldParent.childTasks = oldParent.childTasks.filter(id => id !== this.editingTaskId);
-                        }
-                    }
-                    // Add to new parent
-                    if (taskData.parentId) {
-                        const newParent = this.tasks.find(t => t.id === taskData.parentId);
-                        if (newParent) {
-                            if (!newParent.childTasks) newParent.childTasks = [];
-                            newParent.childTasks.push(this.editingTaskId);
-                        }
-                    }
-                }
-                
                 this.tasks[taskIndex] = { ...this.tasks[taskIndex], ...taskData };
                 this.showToast('タスクが更新されました', 'success');
             }
@@ -1170,7 +1139,6 @@ class TaskManager {
             if (newTask.parentId) {
                 const parentTask = this.tasks.find(t => t.id === newTask.parentId);
                 if (parentTask) {
-                    if (!parentTask.childTasks) parentTask.childTasks = [];
                     parentTask.childTasks.push(newTask.id);
                 }
             }
@@ -1179,7 +1147,6 @@ class TaskManager {
         }
         
         this.closeTaskModal();
-        this.updateParentTaskDropdown();
         this.updateView();
         this.updateStats();
     }

@@ -35,6 +35,11 @@
                         <i class="fas fa-chart-bar"></i> 統計ダッシュボード
                     </button>
                 </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-view="users">
+                        <i class="fas fa-users"></i> ユーザー管理
+                    </button>
+                </li>
             </ul>
         </nav>
 
@@ -48,12 +53,6 @@
                 <div class="header-right">
                     <button class="btn btn--primary" id="new-task-btn">
                         <i class="fas fa-plus"></i> 新規タスク
-                    </button>
-                    <button class="btn btn--secondary" id="bulk-parent-btn">
-                        <i class="fas fa-layer-group"></i> 親タスク一括登録
-                    </button>
-                    <button class="btn btn--secondary" id="bulk-child-btn">
-                        <i class="fas fa-sitemap"></i> 子タスク一括登録
                     </button>
                     <div class="search-box">
                         <input type="text" class="form-control" id="search-input" placeholder="タスクを検索...">
@@ -150,6 +149,39 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Users View -->
+                <div id="users-view" class="view-content">
+                    <div class="users-header">
+                        <div class="users-controls">
+                            <button class="btn btn--primary" id="add-user-btn">
+                                <i class="fas fa-user-plus"></i> 新規ユーザー
+                            </button>
+                            <div class="search-box">
+                                <input type="text" class="form-control" id="user-search-input" placeholder="ユーザーを検索...">
+                                <i class="fas fa-search"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="users-content">
+                        <div class="users-table-container">
+                            <table class="users-table">
+                                <thead>
+                                    <tr>
+                                        <th>ユーザー名</th>
+                                        <th>担当タスク数</th>
+                                        <th>指示タスク数</th>
+                                        <th>完了率</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table-body">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -237,186 +269,65 @@
         </div>
     </div>
 
-    <!-- Bulk Parent Tasks Modal -->
-    <div class="modal" id="bulk-parent-modal">
-        <div class="modal-content modal-content--large">
-            <div class="modal-header">
-                <h3>親タスク一括登録</h3>
-                <button class="modal-close" id="bulk-parent-close">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="bulk-form-section">
-                    <div class="form-group">
-                        <label class="form-label">タスク名 * <small>（1行につき1つのタスク、最大10個まで）</small></label>
-                        <textarea class="form-control bulk-textarea" id="bulk-parent-names" rows="8" placeholder="新規プロジェクト企画&#10;マーケティング戦略&#10;システム改善&#10;..."></textarea>
-                    </div>
-                    <div class="bulk-preview" id="bulk-parent-preview"></div>
-                </div>
-                
-                <div class="bulk-form-section">
-                    <h4>共通設定</h4>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">担当者</label>
-                            <select class="form-control" id="bulk-parent-assignee">
-                                <option value="">選択してください</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">指示者</label>
-                            <select class="form-control" id="bulk-parent-assigner">
-                                <option value="">選択してください</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">ステータス</label>
-                            <select class="form-control" id="bulk-parent-status">
-                                <option value="未開始">未開始</option>
-                                <option value="進行中">進行中</option>
-                                <option value="レビュー中">レビュー中</option>
-                                <option value="完了">完了</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">優先度</label>
-                            <select class="form-control" id="bulk-parent-priority">
-                                <option value="低">低</option>
-                                <option value="中">中</option>
-                                <option value="高">高</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">開始日</label>
-                            <input type="date" class="form-control" id="bulk-parent-start-date">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">期限</label>
-                            <input type="date" class="form-control" id="bulk-parent-deadline">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">共通メモ</label>
-                        <textarea class="form-control" id="bulk-parent-memo" rows="2"></textarea>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn--outline" id="bulk-parent-cancel">キャンセル</button>
-                <button type="button" class="btn btn--primary" id="bulk-parent-save">一括作成</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bulk Child Tasks Modal -->
-    <div class="modal" id="bulk-child-modal">
-        <div class="modal-content modal-content--large">
-            <div class="modal-header">
-                <h3>子タスク一括登録</h3>
-                <button class="modal-close" id="bulk-child-close">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="bulk-form-section">
-                    <div class="form-group">
-                        <label class="form-label">親タスク選択 *</label>
-                        <select class="form-control" id="bulk-child-parent" required>
-                            <option value="">親タスクを選択してください</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">子タスク名 * <small>（1行につき1つのタスク、最大20個まで）</small></label>
-                        <textarea class="form-control bulk-textarea" id="bulk-child-names" rows="10" placeholder="要件定義&#10;基本設計&#10;詳細設計&#10;実装&#10;テスト&#10;..."></textarea>
-                    </div>
-                    <div class="bulk-preview" id="bulk-child-preview"></div>
-                </div>
-                
-                <div class="bulk-form-section">
-                    <h4>共通設定</h4>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">担当者</label>
-                            <select class="form-control" id="bulk-child-assignee">
-                                <option value="">選択してください</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">指示者</label>
-                            <select class="form-control" id="bulk-child-assigner">
-                                <option value="">選択してください</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">ステータス</label>
-                            <select class="form-control" id="bulk-child-status">
-                                <option value="未開始">未開始</option>
-                                <option value="進行中">進行中</option>
-                                <option value="レビュー中">レビュー中</option>
-                                <option value="完了">完了</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">優先度</label>
-                            <select class="form-control" id="bulk-child-priority">
-                                <option value="低">低</option>
-                                <option value="中">中</option>
-                                <option value="高">高</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">開始日</label>
-                            <input type="date" class="form-control" id="bulk-child-start-date">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">期限</label>
-                            <input type="date" class="form-control" id="bulk-child-deadline">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">共通メモ</label>
-                        <textarea class="form-control" id="bulk-child-memo" rows="2"></textarea>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn--outline" id="bulk-child-cancel">キャンセル</button>
-                <button type="button" class="btn btn--primary" id="bulk-child-save">一括作成</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div class="modal" id="delete-modal">
+    <!-- Add User Modal -->
+    <div class="modal" id="add-user-modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>タスク削除の確認</h3>
-                <button class="modal-close" id="delete-modal-close">
+                <h3>新規ユーザー追加</h3>
+                <button class="modal-close" id="add-user-modal-close">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="modal-body">
-                <p id="delete-message">このタスクを削除しますか？</p>
-                <div id="delete-child-options" class="hidden">
-                    <label class="checkbox-wrapper">
-                        <input type="checkbox" id="delete-with-children">
-                        <span class="checkmark"></span>
-                        子タスクも一緒に削除する
-                    </label>
+                <form id="add-user-form">
+                    <div class="form-group">
+                        <label class="form-label">ユーザー名 *</label>
+                        <input type="text" class="form-control" id="new-user-name" required placeholder="ユーザー名を入力してください">
+                        <div class="form-feedback" id="user-name-feedback"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn--outline" id="add-user-cancel">キャンセル</button>
+                <button type="submit" class="btn btn--primary" id="add-user-save">追加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete User Confirmation Modal -->
+    <div class="modal" id="delete-user-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>ユーザー削除確認</h3>
+                <button class="modal-close" id="delete-user-modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="delete-user-message"></p>
+                <div id="delete-user-task-warning" class="task-warning hidden">
+                    <h4>関連タスク</h4>
+                    <p>このユーザーに関連する以下のタスクがあります：</p>
+                    <ul id="related-tasks-list"></ul>
+                    <div class="checkbox-wrapper">
+                        <input type="radio" id="reassign-tasks" name="task-action" value="reassign" checked>
+                        <label for="reassign-tasks">タスクを他のユーザーに再割り当て</label>
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="radio" id="unassign-tasks" name="task-action" value="unassign">
+                        <label for="unassign-tasks">タスクの担当者/指示者を未設定にする</label>
+                    </div>
+                    <div class="form-group reassign-options" id="reassign-options">
+                        <label class="form-label">再割り当て先ユーザー</label>
+                        <select class="form-control" id="reassign-user">
+                            <option value="">選択してください</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn--outline" id="delete-cancel">キャンセル</button>
-                <button type="button" class="btn btn--error" id="delete-confirm">削除</button>
+                <button type="button" class="btn btn--outline" id="delete-user-cancel">キャンセル</button>
+                <button type="button" class="btn btn--error" id="delete-user-confirm">削除実行</button>
             </div>
         </div>
     </div>

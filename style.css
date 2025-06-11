@@ -1122,6 +1122,19 @@ select.form-control {
   margin-bottom: var(--space-16);
 }
 
+.form-feedback {
+  margin-top: var(--space-4);
+  font-size: var(--font-size-sm);
+}
+
+.form-feedback.error {
+  color: var(--color-error);
+}
+
+.form-feedback.success {
+  color: var(--color-success);
+}
+
 /* Card component */
 .card {
   background-color: var(--color-surface);
@@ -1591,6 +1604,107 @@ select.form-control {
 .priority-中 { background: rgba(168, 75, 47, 0.15); color: var(--color-warning); }
 .priority-高 { background: rgba(192, 21, 47, 0.15); color: var(--color-error); }
 
+/* Users View */
+.users-header {
+  margin-bottom: var(--space-24);
+}
+
+.users-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+}
+
+.users-content {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-card-border);
+  overflow: hidden;
+}
+
+.users-table-container {
+  overflow-x: auto;
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.users-table th,
+.users-table td {
+  padding: var(--space-12) var(--space-16);
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.users-table th {
+  background: var(--color-secondary);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.users-table tr:hover {
+  background: var(--color-secondary);
+}
+
+.user-actions {
+  display: flex;
+  gap: var(--space-8);
+}
+
+.user-actions button {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: var(--space-4);
+  border-radius: var(--radius-sm);
+  transition: all var(--duration-fast) var(--ease-standard);
+  font-size: var(--font-size-sm);
+}
+
+.user-actions button:hover {
+  background: var(--color-secondary);
+}
+
+.user-actions button.delete-btn:hover {
+  color: var(--color-error);
+}
+
+.completion-rate {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.completion-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--color-secondary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.completion-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+  transition: width var(--duration-normal) var(--ease-standard);
+}
+
+.completion-text {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  min-width: 40px;
+}
+
 /* Calendar View */
 .calendar-controls {
   display: flex;
@@ -1994,64 +2108,28 @@ select.form-control {
   gap: var(--space-16);
 }
 
-/* Bulk Registration Styles */
-.bulk-form-section {
-  margin-bottom: var(--space-32);
-  padding-bottom: var(--space-24);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.bulk-form-section:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
-}
-
-.bulk-form-section h4 {
-  margin-bottom: var(--space-16);
-  color: var(--color-primary);
-  font-size: var(--font-size-lg);
-}
-
-.bulk-textarea {
-  min-height: 120px;
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-sm);
-  line-height: 1.6;
-}
-
-.bulk-preview {
+/* Task Warning */
+.task-warning {
   margin-top: var(--space-16);
-  padding: var(--space-12);
-  background: var(--color-secondary);
+  padding: var(--space-16);
+  background: rgba(var(--color-warning-rgb), 0.1);
+  border: 1px solid rgba(var(--color-warning-rgb), 0.3);
   border-radius: var(--radius-base);
-  border: 1px solid var(--color-border);
 }
 
-.bulk-preview h5 {
-  margin: 0 0 var(--space-8) 0;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
+.task-warning h4 {
+  color: var(--color-warning);
+  margin-bottom: var(--space-12);
 }
 
-.bulk-preview-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.task-warning ul {
+  margin: var(--space-8) 0;
+  padding-left: var(--space-20);
 }
 
-.bulk-preview-item {
-  padding: var(--space-4) var(--space-8);
+.task-warning li {
   margin-bottom: var(--space-4);
-  background: var(--color-surface);
-  border-radius: var(--radius-sm);
   font-size: var(--font-size-sm);
-  border: 1px solid var(--color-border);
-}
-
-.bulk-preview-empty {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  font-style: italic;
 }
 
 /* Checkbox styles */
@@ -2061,13 +2139,19 @@ select.form-control {
   gap: var(--space-8);
   cursor: pointer;
   font-size: var(--font-size-sm);
-  margin-top: var(--space-12);
+  margin: var(--space-8) 0;
 }
 
-.checkbox-wrapper input[type="checkbox"] {
+.checkbox-wrapper input[type="checkbox"],
+.checkbox-wrapper input[type="radio"] {
   width: 16px;
   height: 16px;
   accent-color: var(--color-primary);
+}
+
+.reassign-options {
+  margin-left: var(--space-24);
+  margin-top: var(--space-12);
 }
 
 /* Toast Notifications */
@@ -2206,5 +2290,19 @@ select.form-control {
 
   .modal-content--large {
     max-width: none;
+  }
+
+  .users-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .users-table-container {
+    font-size: var(--font-size-xs);
+  }
+
+  .users-table th,
+  .users-table td {
+    padding: var(--space-8) var(--space-12);
   }
 }
