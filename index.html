@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>パーフェクトタスク管理Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-tasks"></i> タスク管理Pro</h2>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <button class="nav-link active" data-view="list">
+                        <i class="fas fa-list"></i> リスト表示
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-view="calendar">
+                        <i class="fas fa-calendar"></i> カレンダー表示
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-view="timeline">
+                        <i class="fas fa-chart-gantt"></i> タイムライン表示
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-view="stats">
+                        <i class="fas fa-chart-bar"></i> 統計ダッシュボード
+                    </button>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="app-header">
+                <div class="header-left">
+                    <h1 id="view-title">リスト表示</h1>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn--primary" id="new-task-btn">
+                        <i class="fas fa-plus"></i> 新規タスク
+                    </button>
+                    <button class="btn btn--secondary" id="bulk-parent-btn">
+                        <i class="fas fa-layer-group"></i> 親タスク一括登録
+                    </button>
+                    <button class="btn btn--secondary" id="bulk-child-btn">
+                        <i class="fas fa-sitemap"></i> 子タスク一括登録
+                    </button>
+                    <div class="search-box">
+                        <input type="text" class="form-control" id="search-input" placeholder="タスクを検索...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Views -->
+            <div class="content-container">
+                <!-- List View -->
+                <div id="list-view" class="view-content active">
+                    <div class="filters-section">
+                        <div class="filter-group">
+                            <select class="form-control" id="status-filter">
+                                <option value="">すべてのステータス</option>
+                                <option value="未開始">未開始</option>
+                                <option value="進行中">進行中</option>
+                                <option value="レビュー中">レビュー中</option>
+                                <option value="完了">完了</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <select class="form-control" id="priority-filter">
+                                <option value="">すべての優先度</option>
+                                <option value="高">高</option>
+                                <option value="中">中</option>
+                                <option value="低">低</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <select class="form-control" id="assignee-filter">
+                                <option value="">すべての担当者</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="task-list" id="task-list"></div>
+                </div>
+
+                <!-- Calendar View -->
+                <div id="calendar-view" class="view-content">
+                    <div class="calendar-controls">
+                        <div class="calendar-nav">
+                            <button class="btn btn--secondary" id="prev-period">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <h3 id="calendar-title">2025年6月</h3>
+                            <button class="btn btn--secondary" id="next-period">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                        <div class="calendar-view-switcher">
+                            <button class="btn btn--outline" id="today-btn">
+                                <i class="fas fa-calendar-day"></i> 今日
+                            </button>
+                            <div class="btn-group">
+                                <button class="btn btn--outline active" data-calendar-view="month">月</button>
+                                <button class="btn btn--outline" data-calendar-view="week">週</button>
+                                <button class="btn btn--outline" data-calendar-view="day">日</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="calendar-container" id="calendar-container"></div>
+                </div>
+
+                <!-- Timeline View -->
+                <div id="timeline-view" class="view-content">
+                    <div class="timeline-controls">
+                        <button class="btn btn--outline" id="toggle-subtasks">
+                            <i class="fas fa-eye"></i> 子タスクを表示/非表示
+                        </button>
+                    </div>
+                    <div class="timeline-container" id="timeline-container"></div>
+                </div>
+
+                <!-- Stats View -->
+                <div id="stats-view" class="view-content">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>総タスク数</h3>
+                            <div class="stat-value" id="total-tasks">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>完了タスク</h3>
+                            <div class="stat-value" id="completed-tasks">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>進行中タスク</h3>
+                            <div class="stat-value" id="active-tasks">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>完了率</h3>
+                            <div class="stat-value" id="completion-rate">0%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Task Modal -->
+    <div class="modal" id="task-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">新規タスク作成</h3>
+                <button class="modal-close" id="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="task-form">
+                    <div class="form-group">
+                        <label class="form-label">タスク名 *</label>
+                        <input type="text" class="form-control" id="task-name" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">担当者</label>
+                            <select class="form-control" id="task-assignee">
+                                <option value="">選択してください</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">指示者</label>
+                            <select class="form-control" id="task-assigner">
+                                <option value="">選択してください</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">所要時間（時間）</label>
+                            <input type="number" class="form-control" id="task-hours" min="0" step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">親タスク</label>
+                            <select class="form-control" id="task-parent">
+                                <option value="">なし（親タスク）</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">開始日</label>
+                            <input type="date" class="form-control" id="task-start-date">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">期限</label>
+                            <input type="date" class="form-control" id="task-deadline">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">ステータス</label>
+                            <select class="form-control" id="task-status">
+                                <option value="未開始">未開始</option>
+                                <option value="進行中">進行中</option>
+                                <option value="レビュー中">レビュー中</option>
+                                <option value="完了">完了</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">優先度</label>
+                            <select class="form-control" id="task-priority">
+                                <option value="低">低</option>
+                                <option value="中">中</option>
+                                <option value="高">高</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">メモ</label>
+                        <textarea class="form-control" id="task-memo" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn--outline" id="modal-cancel">キャンセル</button>
+                <button type="submit" class="btn btn--primary" id="modal-save">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Parent Tasks Modal -->
+    <div class="modal" id="bulk-parent-modal">
+        <div class="modal-content modal-content--large">
+            <div class="modal-header">
+                <h3>親タスク一括登録</h3>
+                <button class="modal-close" id="bulk-parent-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="bulk-form-section">
+                    <div class="form-group">
+                        <label class="form-label">タスク名 * <small>（1行につき1つのタスク、最大10個まで）</small></label>
+                        <textarea class="form-control bulk-textarea" id="bulk-parent-names" rows="8" placeholder="新規プロジェクト企画&#10;マーケティング戦略&#10;システム改善&#10;..."></textarea>
+                    </div>
+                    <div class="bulk-preview" id="bulk-parent-preview"></div>
+                </div>
+                
+                <div class="bulk-form-section">
+                    <h4>共通設定</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">担当者</label>
+                            <select class="form-control" id="bulk-parent-assignee">
+                                <option value="">選択してください</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">指示者</label>
+                            <select class="form-control" id="bulk-parent-assigner">
+                                <option value="">選択してください</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">ステータス</label>
+                            <select class="form-control" id="bulk-parent-status">
+                                <option value="未開始">未開始</option>
+                                <option value="進行中">進行中</option>
+                                <option value="レビュー中">レビュー中</option>
+                                <option value="完了">完了</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">優先度</label>
+                            <select class="form-control" id="bulk-parent-priority">
+                                <option value="低">低</option>
+                                <option value="中">中</option>
+                                <option value="高">高</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">開始日</label>
+                            <input type="date" class="form-control" id="bulk-parent-start-date">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">期限</label>
+                            <input type="date" class="form-control" id="bulk-parent-deadline">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">共通メモ</label>
+                        <textarea class="form-control" id="bulk-parent-memo" rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn--outline" id="bulk-parent-cancel">キャンセル</button>
+                <button type="button" class="btn btn--primary" id="bulk-parent-save">一括作成</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Child Tasks Modal -->
+    <div class="modal" id="bulk-child-modal">
+        <div class="modal-content modal-content--large">
+            <div class="modal-header">
+                <h3>子タスク一括登録</h3>
+                <button class="modal-close" id="bulk-child-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="bulk-form-section">
+                    <div class="form-group">
+                        <label class="form-label">親タスク選択 *</label>
+                        <select class="form-control" id="bulk-child-parent" required>
+                            <option value="">親タスクを選択してください</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">子タスク名 * <small>（1行につき1つのタスク、最大20個まで）</small></label>
+                        <textarea class="form-control bulk-textarea" id="bulk-child-names" rows="10" placeholder="要件定義&#10;基本設計&#10;詳細設計&#10;実装&#10;テスト&#10;..."></textarea>
+                    </div>
+                    <div class="bulk-preview" id="bulk-child-preview"></div>
+                </div>
+                
+                <div class="bulk-form-section">
+                    <h4>共通設定</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">担当者</label>
+                            <select class="form-control" id="bulk-child-assignee">
+                                <option value="">選択してください</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">指示者</label>
+                            <select class="form-control" id="bulk-child-assigner">
+                                <option value="">選択してください</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">ステータス</label>
+                            <select class="form-control" id="bulk-child-status">
+                                <option value="未開始">未開始</option>
+                                <option value="進行中">進行中</option>
+                                <option value="レビュー中">レビュー中</option>
+                                <option value="完了">完了</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">優先度</label>
+                            <select class="form-control" id="bulk-child-priority">
+                                <option value="低">低</option>
+                                <option value="中">中</option>
+                                <option value="高">高</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">開始日</label>
+                            <input type="date" class="form-control" id="bulk-child-start-date">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">期限</label>
+                            <input type="date" class="form-control" id="bulk-child-deadline">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">共通メモ</label>
+                        <textarea class="form-control" id="bulk-child-memo" rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn--outline" id="bulk-child-cancel">キャンセル</button>
+                <button type="button" class="btn btn--primary" id="bulk-child-save">一括作成</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="delete-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>タスク削除の確認</h3>
+                <button class="modal-close" id="delete-modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="delete-message">このタスクを削除しますか？</p>
+                <div id="delete-child-options" class="hidden">
+                    <label class="checkbox-wrapper">
+                        <input type="checkbox" id="delete-with-children">
+                        <span class="checkmark"></span>
+                        子タスクも一緒に削除する
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn--outline" id="delete-cancel">キャンセル</button>
+                <button type="button" class="btn btn--error" id="delete-confirm">削除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
